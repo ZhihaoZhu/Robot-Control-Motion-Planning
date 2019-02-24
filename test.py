@@ -1,6 +1,14 @@
 import numpy as np
+from calculate_dist import *
 
-sample_joint_config = (np.random.rand(5) - 0.5) * np.pi
-samples = np.tile(sample_joint_config, (4, 1))
+X= np.array([0,0,0,0,0])
+Y = np.array([[2,2,2,2,2],[1,1,1,1,1]])
 
-print(samples)
+dist = calculate_dist(X,Y)
+
+d = np.argsort(dist)
+dist = list(dist)
+dist.sort()
+
+print(dist)
+print(d)
