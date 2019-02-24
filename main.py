@@ -108,12 +108,34 @@ def main(args):
 
     deg_to_rad = np.pi / 180.
 
-    handles = vu.get_arm_joint_handles(clientID)
+    link_cuboid_spec = {"Origin":[], "Orientation":[], "Dimension":[]}
 
-    for handle in handles:
-        b = vu.get_object_position(clientID, handle)
-        b = vu.get_object_orientation(clientID, handle)
-        b = vu.get_object_bounding_box(clientID, handle)
+    link_cuboid_list = ("arm_base_link_joint_collision_cuboid", "shoulder_link_collision_cuboid",
+                   "elbow_link_collision_cuboid","forearm_link_collision_cuboid",
+                   "wrist_link_collision_cuboid","gripper_link_collision_cuboid",
+                   "finger_r_collision_cuboid","finger_l_collision_cuboid")
+    for link_cuboid in link_cuboid_list:
+        d = vu.get_handle_by_name(clientID, link_cuboid)
+        link_cuboid_spec["Origin"].append(vu.get_object_position(clientID, d))
+        link_cuboid_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
+        link_cuboid_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
+
+    print(link_cuboid_spec["Orientation"][0])
+
+    print(link_cuboid_spec["Dimension"][0])
+
+    obstacle_cuboid_spec = {"Origin": [], "Orientation": [], "Dimension": []}
+
+    obstacle_cuboid_list = ("cuboid_0", "cuboid_1",
+                        "cuboid_2", "cuboid_3",
+                        "cuboid_4", "cuboid_5")
+    for obstacle_cuboid in obstacle_cuboid_list:
+        d = vu.get_handle_by_name(clientID, obstacle_cuboid)
+        obstacle_cuboid_spec["Origin"].append(vu.get_object_position(clientID, d))
+        obstacle_cuboid_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
+        obstacle_cuboid_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
+
+
 
 
     # joint_targets = [[0.,
