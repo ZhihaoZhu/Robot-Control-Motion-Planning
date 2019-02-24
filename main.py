@@ -12,6 +12,8 @@ sys.path.append(os.path.join(cwd, 'utilities'))
 # Import application libraries
 import numpy as np
 import vrep_utils as vu
+from PRM import *
+from Dijkstra import *
 
 # Import any other libraries you might want to use ############################
 import matplotlib.pyplot as plt
@@ -86,9 +88,17 @@ class ArmController:
 
         # ...
         #########################################################
+'''
+    Global variables
+'''
+link_cuboid_spec = {}
+obstacle_cuboid_spec = {}
 
 
 def main(args):
+    global link_cuboid_spec
+    global obstacle_cuboid_spec
+
     # Connect to V-REP
     print('Connecting to V-REP...')
     clientID = vu.connect_to_vrep()
@@ -136,6 +146,18 @@ def main(args):
         obstacle_cuboid_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
 
 
+    '''
+    
+        这里涉及到一个问题，那就是角度超过360度的问题
+    '''
+
+    n_samples = 100
+    K = 3
+    samples, edges, edge_length = PRM(n_samples, K)
+    joint_targets = Dijkstra(samples, edges, edge_length)
+
+
+
 
 
     # joint_targets = [[0.,
@@ -160,35 +182,35 @@ def main(args):
     #                   - 0.05,
     #                   0.05]]
     #
-    # # Instantiate controller
-    # controller = ArmController()
-    #
-    # # Iterate through target joint positions
-    # for target in joint_targets:
-    #
-    #     # Set new target position
-    #     controller.set_target_joint_positions(target)
-    #
-    #     steady_state_reached = False
-    #     while not steady_state_reached:
-    #         timestamp = vu.get_sim_time_seconds(clientID)
-    #         print('Simulation time: {} sec'.format(timestamp))
-    #
-    #         # Get current joint positions
-    #         sensed_joint_positions = vu.get_arm_joint_positions(clientID)
-    #
-    #         # Calculate commands
-    #         commands = controller.calculate_commands_from_feedback(timestamp, sensed_joint_positions)
-    #
-    #         # Send commands to V-REP
-    #         vu.set_arm_joint_target_velocities(clientID, commands)
-    #
-    #         # Print current joint positions (comment out if you'd like)
-    #         print(sensed_joint_positions)
-    #         vu.step_sim(clientID, 1)
-    #
-    #         # Determine if we've met the condition to move on to the next point
-    #         steady_state_reached = controller.has_stably_converged_to_target()
+    # Instantiate controller
+    controller = ArmController()
+
+    # Iterate through target joint positions
+    for target in joint_targets:
+
+        # Set new target position
+        controller.set_target_joint_positions(target)
+
+        steady_state_reached = False
+        while not steady_state_reached:
+            timestamp = vu.get_sim_time_seconds(clientID)
+            print('Simulation time: {} sec'.format(timestamp))
+
+            # Get current joint positions
+            sensed_joint_positions = vu.get_arm_joint_positions(clientID)
+
+            # Calculate commands
+            commands = controller.calculate_commands_from_feedback(timestamp, sensed_joint_positions)
+
+            # Send commands to V-REP
+            vu.set_arm_joint_target_velocities(clientID, commands)
+
+            # Print current joint positions (comment out if you'd like)
+            print(sensed_joint_positions)
+            vu.step_sim(clientID, 1)
+
+            # Determine if we've met the condition to move on to the next point
+            steady_state_reached = controller.has_stably_converged_to_target()
 
     vu.stop_sim(clientID)
 

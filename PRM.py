@@ -13,7 +13,6 @@ def PRM(n_samples, K):
     for i in range(1,n_samples):
         X = Random_sample()
         dist = calculate_dist(X, samples[:i,:])
-
         dist_index = np.argsort(dist)
         dist = list(dist)
         dist.sort()
