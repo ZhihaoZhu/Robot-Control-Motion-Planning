@@ -20,7 +20,7 @@ def PRM(n_samples, K):
 
         for ii in range(min(K,len(dist))):
             j = dist_index[ii]
-            if local_planner(X,samples[j]):
+            if local_planner(X,samples[j,:]):
                 n_edges += 1
                 edges[n_edges,:] = [i, j]
                 edge_length[n_edges] = dist[ii]

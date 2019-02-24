@@ -3,12 +3,12 @@ from calculate_dist import *
 
 X= np.array([0,0,0,0,0])
 Y = np.array([[2,2,2,2,2],[1,1,1,1,1]])
+delta = X-Y
+dd = np.sum(abs(delta))
 
-dist = calculate_dist(X,Y)
+print(dd)
+n_samples = np.ceil(np.sum(abs(delta)) / 0.017).astype(int)
 
-d = np.argsort(dist)
-dist = list(dist)
-dist.sort()
+print(2/5)
 
-print(dist)
-print(d)
+print(n_samples)
