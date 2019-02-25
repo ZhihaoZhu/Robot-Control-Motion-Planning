@@ -91,8 +91,8 @@ class ArmController:
 '''
     Global variables
 '''
-link_cuboid_spec = {}
-obstacle_cuboid_spec = {}
+link_cuboid_spec = []
+obstacle_cuboid_spec = []
 
 
 def main(args):
@@ -118,43 +118,37 @@ def main(args):
 
     deg_to_rad = np.pi / 180.
 
-    link_cuboid_spec = {"Origin":[], "Orientation":[], "Dimension":[]}
-
     link_cuboid_list = ("arm_base_link_joint_collision_cuboid", "shoulder_link_collision_cuboid",
                    "elbow_link_collision_cuboid","forearm_link_collision_cuboid",
                    "wrist_link_collision_cuboid","gripper_link_collision_cuboid",
                    "finger_r_collision_cuboid","finger_l_collision_cuboid")
     for link_cuboid in link_cuboid_list:
         d = vu.get_handle_by_name(clientID, link_cuboid)
-        link_cuboid_spec["Origin"].append(vu.get_object_position(clientID, d))
-        link_cuboid_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
-        link_cuboid_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
+        link_spec = {}
+        link_spec["Origin"] = vu.get_object_position(clientID, d)
+        link_spec["Orientation"] = vu.get_object_orientation(clientID, d)
+        link_spec["Dimension"] = vu.get_object_bounding_box(clientID, d)
+        link_cuboid_spec.append(link_spec)
 
-    print(link_cuboid_spec["Orientation"][0])
-
-    print(link_cuboid_spec["Dimension"][0])
-
-    obstacle_cuboid_spec = {"Origin": [], "Orientation": [], "Dimension": []}
 
     obstacle_cuboid_list = ("cuboid_0", "cuboid_1",
                         "cuboid_2", "cuboid_3",
                         "cuboid_4", "cuboid_5")
     for obstacle_cuboid in obstacle_cuboid_list:
         d = vu.get_handle_by_name(clientID, obstacle_cuboid)
-        obstacle_cuboid_spec["Origin"].append(vu.get_object_position(clientID, d))
-        obstacle_cuboid_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
-        obstacle_cuboid_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
+        obstacle_spec = {}
+        obstacle_spec["Origin"].append(vu.get_object_position(clientID, d))
+        obstacle_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
+        obstacle_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
+        obstacle_cuboid_spec.append(obstacle_spec)
 
 
-    '''
-    
-        这里涉及到一个问题，那就是角度超过360度的问题
-    '''
 
-    n_samples = 100
-    K = 3
-    samples, edges, edge_length = PRM(n_samples, K)
-    joint_targets = Dijkstra(samples, edges, edge_length)
+
+    # n_samples = 100
+    # K = 3
+    # samples, edges, edge_length = PRM(n_samples, K)
+    # joint_targets = Dijkstra(samples, edges, edge_length)
 
 
 
@@ -182,37 +176,42 @@ def main(args):
     #                   - 0.05,
     #                   0.05]]
     #
+
+
     # Instantiate controller
-    controller = ArmController()
 
-    # Iterate through target joint positions
-    for target in joint_targets:
 
-        # Set new target position
-        controller.set_target_joint_positions(target)
 
-        steady_state_reached = False
-        while not steady_state_reached:
-            timestamp = vu.get_sim_time_seconds(clientID)
-            print('Simulation time: {} sec'.format(timestamp))
-
-            # Get current joint positions
-            sensed_joint_positions = vu.get_arm_joint_positions(clientID)
-
-            # Calculate commands
-            commands = controller.calculate_commands_from_feedback(timestamp, sensed_joint_positions)
-
-            # Send commands to V-REP
-            vu.set_arm_joint_target_velocities(clientID, commands)
-
-            # Print current joint positions (comment out if you'd like)
-            print(sensed_joint_positions)
-            vu.step_sim(clientID, 1)
-
-            # Determine if we've met the condition to move on to the next point
-            steady_state_reached = controller.has_stably_converged_to_target()
-
-    vu.stop_sim(clientID)
+    # controller = ArmController()
+    #
+    # # Iterate through target joint positions
+    # for target in joint_targets:
+    #
+    #     # Set new target position
+    #     controller.set_target_joint_positions(target)
+    #
+    #     steady_state_reached = False
+    #     while not steady_state_reached:
+    #         timestamp = vu.get_sim_time_seconds(clientID)
+    #         print('Simulation time: {} sec'.format(timestamp))
+    #
+    #         # Get current joint positions
+    #         sensed_joint_positions = vu.get_arm_joint_positions(clientID)
+    #
+    #         # Calculate commands
+    #         commands = controller.calculate_commands_from_feedback(timestamp, sensed_joint_positions)
+    #
+    #         # Send commands to V-REP
+    #         vu.set_arm_joint_target_velocities(clientID, commands)
+    #
+    #         # Print current joint positions (comment out if you'd like)
+    #         print(sensed_joint_positions)
+    #         vu.step_sim(clientID, 1)
+    #
+    #         # Determine if we've met the condition to move on to the next point
+    #         steady_state_reached = controller.has_stably_converged_to_target()
+    #
+    # vu.stop_sim(clientID)
 
     # Post simulation cleanup -- save results to a pickle, plot time histories, etc #####
     # Fill this out here (optional) or in your own script
