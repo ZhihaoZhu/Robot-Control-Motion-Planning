@@ -4,13 +4,14 @@ from calculate_dist import *
 from local_planner import *
 
 def PRM(n_samples, K):
-    sample = Random_sample()
-    samples = []
-    samples.append(sample)
+    deg_to_rad = np.pi / 180.
+    start = np.array([-80. * deg_to_rad,0,0,0,0])
+    end = np.array([0, 60*deg_to_rad, -75*deg_to_rad, -75*deg_to_rad, 0])
+    samples = [start,end]
     edges = {}
     edge_length = {}
 
-    for i in range(1,n_samples):
+    for i in range(2,n_samples):
         X = Random_sample()
         samples.append(X)
         dist = calculate_dist(X, samples[:i,:])

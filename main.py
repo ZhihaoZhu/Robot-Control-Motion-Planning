@@ -141,6 +141,7 @@ def main(args):
         obstacle_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
         obstacle_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
         obstacle_cuboid_spec.append(obstacle_spec)
+    print("done")
 
 
 
@@ -148,8 +149,9 @@ def main(args):
     # n_samples = 100
     # K = 3
     # samples, edges, edge_length = PRM(n_samples, K)
-    # joint_targets = Dijkstra(samples, edges, edge_length)
-
+    # start = np.array([-80. * deg_to_rad, 0, 0, 0, 0])
+    # joint_targets_path = Dijkstra(samples, edges, edge_length,start)
+    # joint_targets = ... Transfer from joint_targets_path
 
 
 

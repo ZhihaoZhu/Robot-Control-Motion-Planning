@@ -24,7 +24,7 @@ def dijsktra(samples, edges, edge_length, start):
                 visited[edge_node] = weight
                 path[edge_node] = cur_node
 
-    return visited, path
+    return path
 
 
 
