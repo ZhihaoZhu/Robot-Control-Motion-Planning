@@ -1,5 +1,5 @@
 import numpy as np
-from SAT import collosion_detect
+# from SAT import collosion_detect
 
 # True if collides
 # check if the bounding box collides or not

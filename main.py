@@ -130,20 +130,22 @@ def main(args):
         link_spec["Dimension"] = vu.get_object_bounding_box(clientID, d)
         link_cuboid_spec.append(link_spec)
 
-
     obstacle_cuboid_list = ("cuboid_0", "cuboid_1",
                         "cuboid_2", "cuboid_3",
                         "cuboid_4", "cuboid_5")
     for obstacle_cuboid in obstacle_cuboid_list:
         d = vu.get_handle_by_name(clientID, obstacle_cuboid)
         obstacle_spec = {}
-        obstacle_spec["Origin"].append(vu.get_object_position(clientID, d))
-        obstacle_spec["Orientation"].append(vu.get_object_orientation(clientID, d))
-        obstacle_spec["Dimension"].append(vu.get_object_bounding_box(clientID, d))
+        obstacle_spec["Origin"] = vu.get_object_position(clientID, d)
+        obstacle_spec["Orientation"] = vu.get_object_orientation(clientID, d)
+        obstacle_spec["Dimension"] = vu.get_object_bounding_box(clientID, d)
         obstacle_cuboid_spec.append(obstacle_spec)
     print("done")
 
-
+    print(link_cuboid_spec[0])
+    print(link_cuboid_spec[1])
+    print(link_cuboid_spec[2])
+    print(link_cuboid_spec[3])
 
 
     # n_samples = 100
