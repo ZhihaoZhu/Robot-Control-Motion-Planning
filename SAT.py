@@ -1,31 +1,30 @@
 import numpy as np
 import math
 
-
 '''
     Transform the roll pitch yaw to rotation matrix
 '''
 def RPY_to_Rotation(RPY_list):
     roll, pitch, yaw = RPY_list[0], RPY_list[1], RPY_list[2]
-    yawMatrix = np.matrix([
+    yawMatrix = np.array([
         [math.cos(yaw), -math.sin(yaw), 0],
         [math.sin(yaw), math.cos(yaw), 0],
         [0, 0, 1]
     ])
 
-    pitchMatrix = np.matrix([
+    pitchMatrix = np.array([
         [math.cos(pitch), 0, math.sin(pitch)],
         [0, 1, 0],
         [-math.sin(pitch), 0, math.cos(pitch)]
     ])
 
-    rollMatrix = np.matrix([
+    rollMatrix = np.array([
         [1, 0, 0],
         [0, math.cos(roll), -math.sin(roll)],
         [0, math.sin(roll), math.cos(roll)]
     ])
 
-    R = yawMatrix * pitchMatrix * rollMatrix
+    R = yawMatrix @ pitchMatrix @ rollMatrix
     return R
 
 # the cubes do not collide with each other in one axis only when the max of one cube is smaller than another cube
@@ -59,18 +58,31 @@ def collision_detect(ref_corner, cuboid_corner):
 
 def Check_Collision(cuboid_ref, cuboid):
     T_matrix = np.array([[1,1,1],[1,-1,1],[-1,-1,1],[-1,1,1],[1,1,-1],[1,-1,-1],[-1,-1,-1],[-1,1,-1]])
-    Projection_matrix = np.array([[1,0,0],[0,1,0],[0,0,1]])
+    Projection_matrix = np.array([[1,0,0],[0,1,0],[0,0,1]])     # Here stores the information of the projection axis
 
-    # Calculate rotation matrix for both cubes in respect to the base frame
+    # Calculate all possible projection axis for both cubes in respect to the base frame
+    Projection_axis = []
     Rotation_ref = RPY_to_Rotation(cuboid_ref["Orientation"])
     Rotation_cub = RPY_to_Rotation(cuboid["Orientation"])
+
+    PA_ref = Projection_matrix @ Rotation_ref
+    PA_cub = Projection_matrix @ Rotation_cub
+    Projection_axis.append(PA_ref)
+    Projection_axis.append(PA_cub)
+
+    for i in range(3):
+        base_axis = PA_ref[:,i].reshape(3)
+        PA = np.zeros((3,3))
+        for j in range(3):
+            a = np.cross(base_axis, PA_cub[:,j].reshape(3))
+            PA[:,j] = a.reshape(3)
+        Projection_axis.append(PA)
 
     # Rotate each corner point relative to cube's center (do not consider the position relative to base frame's origin)
     cuboid_corner_initial = np.array(
         [cuboid["Dimension"][0] / 2, cuboid["Dimension"][1] / 2, cuboid["Dimension"][2] / 2])
     cuboid_corner_dimension = np.tile(cuboid_corner_initial, (8, 1))
     cuboid_corner = cuboid_corner_dimension * T_matrix
-
 
     # Rotate each corner point relative to cube's center (do not consider the position relative to base frame's origin)
     ref_corner_initial = np.array(
@@ -83,31 +95,23 @@ def Check_Collision(cuboid_ref, cuboid):
     cub_corners = cuboid_corner @ Rotation_cub + np.array(cuboid["Origin"])
     # Uncomment below to plot current position of two cubes
 
-    #Project each cube onto the normals of reference cube
-    Projection_matrix_ref = Projection_matrix @ Rotation_ref
-    cuboid_corner_new = cub_corners @ Projection_matrix_ref.T
-    ref_corner_new = ref_corners @ Projection_matrix_ref.T
-    Collision_or_not_ref = collision_detect(ref_corner_new,cuboid_corner_new) # check collision
-    # Uncomment below to plot current position of two cubes (in cordinates of the reference cube)
+    Collision_or_not = True
+    for PA in Projection_axis:
+        cuboid_corner_new = cub_corners @ PA.T
+        ref_corner_new = ref_corners @ PA.T
+        Collision_Decision = collision_detect(ref_corner_new, cuboid_corner_new)
+        Collision_or_not = Collision_Decision and Collision_or_not
 
-    #Project each cube onto the normals of reference cube
-    Projection_matrix_cub = Projection_matrix @ Rotation_cub
-    cuboid_corner_new = cub_corners @ Projection_matrix_cub.T
-    ref_corner_new = ref_corners @ Projection_matrix_cub.T
-    Collision_or_not_cub = collision_detect(ref_corner_new,cuboid_corner_new)
-    # Uncomment below to plot current position of two cubes (in cordinates of the reference cube)
-
-    return Collision_or_not_ref and Collision_or_not_cub
-
+    return Collision_or_not
 
 def collosion_detect(cuboid_1,cuboid_2):
     result = Check_Collision(cuboid_1, cuboid_2)   #  In reference of cuboid1
     return result
 
-# def chech_two_cuboid():
-#     cuboid_1 = {"Origin": [0, 0, 0], "Orientation": [0, 0, 0], "Dimension": [2, 2, 2]}
-#     cuboid_2 = {"Origin": [1.7, 1.7, 0], "Orientation": [0, 0, np.pi/4], "Dimension": [2, 2, 2]}
-#     print(collosion_detect(cuboid_1,cuboid_2))
+def main():
+    cuboid_1 = {"Origin": [0, 0, 0], "Orientation": [0, 0, 0], "Dimension": [2, 2, 2]}
+    cuboid_2 = {"Origin": [1.7, 1.7, 0], "Orientation": [0, 0, np.pi/4], "Dimension": [2, 2, 2]}
+    print(collosion_detect(cuboid_1,cuboid_2))
 
-
-
+if __name__ == '__main__':
+    main()
