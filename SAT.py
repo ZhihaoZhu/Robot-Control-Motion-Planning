@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from plot_cuboid import *
 
 '''
     Transform the roll pitch yaw to rotation matrix
@@ -24,13 +25,13 @@ def RPY_to_Rotation(RPY_list):
         [0, math.sin(roll), math.cos(roll)]
     ])
 
-    R = yawMatrix @ pitchMatrix @ rollMatrix
+    R = yawMatrix.dot(pitchMatrix.dot( rollMatrix))
     return R
 
 # the cubes do not collide with each other in one axis only when the max of one cube is smaller than another cube
 # under the same axis
 def collide_check(ref_min, ref_max, _min, _max):
-    if ref_min>_max or ref_max<_min:
+    if ref_min > _max or ref_max < _min:
         return False
     return True
 
@@ -65,8 +66,8 @@ def Check_Collision(cuboid_ref, cuboid):
     Rotation_ref = RPY_to_Rotation(cuboid_ref["Orientation"])
     Rotation_cub = RPY_to_Rotation(cuboid["Orientation"])
 
-    PA_ref = Projection_matrix @ Rotation_ref
-    PA_cub = Projection_matrix @ Rotation_cub
+    PA_ref = Projection_matrix.dot( Rotation_ref)
+    PA_cub = Projection_matrix.dot(Rotation_cub)
     Projection_axis.append(PA_ref)
     Projection_axis.append(PA_cub)
 
@@ -91,14 +92,15 @@ def Check_Collision(cuboid_ref, cuboid):
     ref_corner = ref_corner_dimension * T_matrix
 
     # Add origin to get the absolute cordinates of each corner point
-    ref_corners = ref_corner @ Rotation_ref + np.array(cuboid_ref["Origin"])
-    cub_corners = cuboid_corner @ Rotation_cub + np.array(cuboid["Origin"])
+    ref_corners = ref_corner.dot( Rotation_ref) + np.array(cuboid_ref["Origin"])
+    cub_corners = cuboid_corner.dot( Rotation_cub )+ np.array(cuboid["Origin"])
     # Uncomment below to plot current position of two cubes
+    # plot_linear_cube(ref_corners, cub_corners, color='red')
 
     Collision_or_not = True
     for PA in Projection_axis:
-        cuboid_corner_new = cub_corners @ PA.T
-        ref_corner_new = ref_corners @ PA.T
+        cuboid_corner_new = cub_corners.dot( PA.T)
+        ref_corner_new = ref_corners.dot(PA.T)
         Collision_Decision = collision_detect(ref_corner_new, cuboid_corner_new)
         Collision_or_not = Collision_Decision and Collision_or_not
 
@@ -109,8 +111,8 @@ def collosion_detect(cuboid_1,cuboid_2):
     return result
 
 def main():
-    cuboid_1 = {"Origin": [0, 0, 0], "Orientation": [0, 0, 0], "Dimension": [2, 2, 2]}
-    cuboid_2 = {"Origin": [1.7, 1.7, 0], "Orientation": [0, 0, np.pi/4], "Dimension": [2, 2, 2]}
+    cuboid_1 = {"Origin": [0, 0, 0], "Orientation": [0, 0, 0], "Dimension": [3, 1, 2]}
+    cuboid_2 = {"Origin": [3, 0, 0], "Orientation": [0, 0, 0], "Dimension": [3, 1, 1]}
     print(collosion_detect(cuboid_1,cuboid_2))
 
 if __name__ == '__main__':
