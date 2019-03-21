@@ -2,7 +2,6 @@
 import argparse
 import os
 import sys
-from forward_kinetics import ForwardKinematics
 
 # Modify the following lines if you have problems importing the V-REP utilities
 cwd = os.getcwd()
@@ -10,12 +9,10 @@ sys.path.append(cwd)
 sys.path.append(os.path.join(cwd, 'lib'))
 sys.path.append(os.path.join(cwd, 'utilities'))
 
-
 # Import application libraries
 import numpy as np
 import vrep_utils as vu
-from PRM import *
-from Dijkstra import *
+from SAT import *
 
 # Import any other libraries you might want to use ############################
 import matplotlib.pyplot as plt
@@ -32,7 +29,7 @@ class ArmController:
         self.err_cur = np.zeros(7)
         self.err_acc = np.zeros(7)
         self.kp = 10.0
-        self.ki = 0.3
+        self.ki = 0.0
         self.kd = 0.2
         self.rate = 1e-3
         self.num = 0
@@ -90,17 +87,11 @@ class ArmController:
 
         # ...
         #########################################################
-'''
-    Global variables
-'''
+
 link_cuboid_spec = []
 obstacle_cuboid_spec = []
 
-
 def main(args):
-    global link_cuboid_spec
-    global obstacle_cuboid_spec
-
     # Connect to V-REP
     print('Connecting to V-REP...')
     clientID = vu.connect_to_vrep()
@@ -121,9 +112,9 @@ def main(args):
     deg_to_rad = np.pi / 180.
 
     link_cuboid_list = ("arm_base_link_joint_collision_cuboid", "shoulder_link_collision_cuboid",
-                   "elbow_link_collision_cuboid","forearm_link_collision_cuboid",
-                   "wrist_link_collision_cuboid","gripper_link_collision_cuboid",
-                   "finger_r_collision_cuboid","finger_l_collision_cuboid")
+                        "elbow_link_collision_cuboid", "forearm_link_collision_cuboid",
+                        "wrist_link_collision_cuboid", "gripper_link_collision_cuboid",
+                        "finger_r_collision_cuboid", "finger_l_collision_cuboid")
     for link_cuboid in link_cuboid_list:
         d = vu.get_handle_by_name(clientID, link_cuboid)
         link_spec = {}
@@ -133,8 +124,8 @@ def main(args):
         link_cuboid_spec.append(link_spec)
 
     obstacle_cuboid_list = ("cuboid_0", "cuboid_1",
-                        "cuboid_2", "cuboid_3",
-                        "cuboid_4", "cuboid_5")
+                            "cuboid_2", "cuboid_3",
+                            "cuboid_4", "cuboid_5")
     for obstacle_cuboid in obstacle_cuboid_list:
         d = vu.get_handle_by_name(clientID, obstacle_cuboid)
         obstacle_spec = {}
@@ -144,77 +135,38 @@ def main(args):
         obstacle_cuboid_spec.append(obstacle_spec)
     print("done")
 
-
-
-
-    # n_samples = 100
-    # K = 3
-    # samples, edges, edge_length = PRM(n_samples, K)
-    # start = np.array([-80. * deg_to_rad, 0, 0, 0, 0])
-    # joint_targets_path = Dijkstra(samples, edges, edge_length,start)
-    # joint_targets = ... Transfer from joint_targets_path
-
-
-
-
-    # joint_targets = [[0.,
-    #                   0.,
-    #                   0.,
-    #                   0.,
-    #                   0.,
-    #                   - 0.07,
-    #                   0.07], \
-    #                  [-45. * deg_to_rad,
-    #                   -15. * deg_to_rad,
-    #                   20. * deg_to_rad,
-    #                   15. * deg_to_rad,
-    #                   -75. * deg_to_rad,
-    #                   - 0.03,
-    #                   0.03], \
-    #                  [30. * deg_to_rad,
-    #                   60. * deg_to_rad,
-    #                   -65. * deg_to_rad,
-    #                   45. * deg_to_rad,
-    #                   0. * deg_to_rad,
-    #                   - 0.05,
-    #                   0.05]]
-    #
-
+    joint_targets = get_cuboid_config()
 
     # Instantiate controller
+    controller = ArmController()
 
+    # Iterate through target joint positions
+    for target in joint_targets:
 
+        # Set new target position
+        controller.set_target_joint_positions(target)
 
-    # controller = ArmController()
-    #
-    # # Iterate through target joint positions
-    # for target in joint_targets:
-    #
-    #     # Set new target position
-    #     controller.set_target_joint_positions(target)
-    #
-    #     steady_state_reached = False
-    #     while not steady_state_reached:
-    #         timestamp = vu.get_sim_time_seconds(clientID)
-    #         print('Simulation time: {} sec'.format(timestamp))
-    #
-    #         # Get current joint positions
-    #         sensed_joint_positions = vu.get_arm_joint_positions(clientID)
-    #
-    #         # Calculate commands
-    #         commands = controller.calculate_commands_from_feedback(timestamp, sensed_joint_positions)
-    #
-    #         # Send commands to V-REP
-    #         vu.set_arm_joint_target_velocities(clientID, commands)
-    #
-    #         # Print current joint positions (comment out if you'd like)
-    #         print(sensed_joint_positions)
-    #         vu.step_sim(clientID, 1)
-    #
-    #         # Determine if we've met the condition to move on to the next point
-    #         steady_state_reached = controller.has_stably_converged_to_target()
-    #
-    # vu.stop_sim(clientID)
+        steady_state_reached = False
+        while not steady_state_reached:
+            timestamp = vu.get_sim_time_seconds(clientID)
+            # print('Simulation time: {} sec'.format(timestamp))
+
+            # Get current joint positions
+            sensed_joint_positions = vu.get_arm_joint_positions(clientID)
+
+            # Calculate commands
+            commands = controller.calculate_commands_from_feedback(timestamp, sensed_joint_positions)
+
+            # Send commands to V-REP
+            vu.set_arm_joint_target_velocities(clientID, commands)
+
+            # Print current joint positions (comment out if you'd like)
+            vu.step_sim(clientID, 1)
+
+            # Determine if we've met the condition to move on to the next point
+            steady_state_reached = controller.has_stably_converged_to_target()
+
+    vu.stop_sim(clientID)
 
     # Post simulation cleanup -- save results to a pickle, plot time histories, etc #####
     # Fill this out here (optional) or in your own script
@@ -224,18 +176,18 @@ def main(args):
 
 
 
-    # plt.figure()
-    #
-    # for i in range(7):
-    #     plt.subplot(2, 4, i + 1)
-    #     plt.title('Joint %d' % (i+1))
-    #     plt.xlabel('Time')
-    #     plt.ylabel('Joint angle')
-    #     a1 = np.array(controller.history['joint_feedback'])[:, i]
-    #     a2 = np.array(controller.history['joint_target'])[:, i]
-    #     plt.plot(0.05 * np.arange(len(a1)), a1)
-    #     plt.plot(0.05 * np.arange(len(a2)), a2)
-    # plt.show()
+    plt.figure()
+
+    for i in range(7):
+        plt.subplot(2, 4, i + 1)
+        plt.title('Joint %d' % (i+1))
+        plt.xlabel('Time')
+        plt.ylabel('Joint angle')
+        a1 = np.array(controller.history['joint_feedback'])[:, i]
+        a2 = np.array(controller.history['joint_target'])[:, i]
+        plt.plot(0.05 * np.arange(len(a1)), a1)
+        plt.plot(0.05 * np.arange(len(a2)), a2)
+    plt.show()
 
 
 if __name__ == "__main__":

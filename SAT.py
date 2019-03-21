@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from plot_cuboid import *
+import time
 
 '''
     Transform the roll pitch yaw to rotation matrix
@@ -57,10 +58,19 @@ def collision_detect(ref_corner, cuboid_corner):
 
     return (x_collide and y_collide and z_collide)
 
+def get_cuboid_config():
+    deg_to_rad = np.pi / 180.
+    time.sleep(120)
+    return [[-80 * deg_to_rad,0,0,0,0,-0.03,-0.03],
+            [-70 * deg_to_rad, 0*deg_to_rad, -60*deg_to_rad, 0, 20 * deg_to_rad, -0.03, -0.03],
+            [50 * deg_to_rad, 0*deg_to_rad, -50*deg_to_rad, 10*deg_to_rad, 10 * deg_to_rad, -0.03, -0.03],
+            [85 * deg_to_rad, 20*deg_to_rad, -10*deg_to_rad, 0, 15 * deg_to_rad, -0.03, -0.03],
+            [20 * deg_to_rad, 30 * deg_to_rad, -0 * deg_to_rad, -10*deg_to_rad, 4 * deg_to_rad, -0.03, -0.03],
+            [0 * deg_to_rad, 60. * deg_to_rad, -75 * deg_to_rad, -75 * deg_to_rad, 0, -0.03, -0.03],
+            ]
 def Check_Collision(cuboid_ref, cuboid):
     T_matrix = np.array([[1,1,1],[1,-1,1],[-1,-1,1],[-1,1,1],[1,1,-1],[1,-1,-1],[-1,-1,-1],[-1,1,-1]])
     Projection_matrix = np.array([[1,0,0],[0,1,0],[0,0,1]])     # Here stores the information of the projection axis
-
     # Calculate all possible projection axis for both cubes in respect to the base frame
     Projection_axis = []
     Rotation_ref = RPY_to_Rotation(cuboid_ref["Orientation"])
